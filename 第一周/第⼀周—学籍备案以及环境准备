@@ -1,0 +1,365 @@
+环境准备
+
+
+
+linux+nginx+php-fpm+mysql
+
+这里介绍两种方法配置环境 
+docker
+手动配置
+一、docker
+
+docker真的非常方便了，个人推荐docker
+我的是ubuntu18，直接一个命令就ok了
+sudo apt install docker.io
+
+开启docker
+
+sudo systemctl start docker
+sudo systemctl enable docker
+
+免sudo配置
+
+    sudo addgroup --system docker
+    sudo adduser $USER docker
+    newgrp docker
+
+docker拉取nginx镜像
+
+docker search nginx
+我是直接拉取的官方的，不过可能有点慢，需要换一个源
+然后直接docker pull nginx
+
+拉取完之后可以看看自己本地的docker镜像
+
+然后就跑起来docker run --name runoob-nginx-test -p 8081:80 -d nginx
+
+- runoob-nginx-test是容器的名称
+- -d 是在后台运行
+- -p 是端口映射，这里就是把8081映射到80端口
+
+然后访问127.0.0.1:8081就行了
+
+
+
+安装php
+
+一样的，还是直接拉取官方的php，不过这里带一个fpm
+
+docker pull php:5.6-fpm
+
+
+
+
+
+nginx+php部署
+
+启动php 
+
+docker run --name  myphp-fpm -v ~/nginx/www:/www  -d php:5.6-fpm`
+
+- --name：将容器命名为myphp-fpm
+- -v：将主机项目中的www目录挂载到容器的/www
+
+创建~/nginx/conf/conf.d 目录
+
+mkdir ~/nginx/conf/conf.d
+
+在该目录下添加 ~/nginx/conf/conf.d/runoob-test-php.conf 文件，内容如下：
+
+    server {
+        listen       80;
+        server_name  localhost;
+    
+        location / {
+            root   /usr/share/nginx/html;
+            index  index.html index.htm index.php;
+        }
+    
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   /usr/share/nginx/html;
+        }
+    
+        location ~ \.php$ {
+            fastcgi_pass   php:9000;
+            fastcgi_index  index.php;
+            fastcgi_param  SCRIPT_FILENAME  /www/$fastcgi_script_name;
+            include        fastcgi_params;
+        }
+    }
+
+启动nginx
+
+    docker run --name runoob-php-nginx -p 8083:80 -d \
+        -v ~/nginx/www:/usr/share/nginx/html:ro \
+        -v ~/nginx/conf/conf.d:/etc/nginx/conf.d:ro \
+        --link myphp-fpm:php \
+        nginx
+
+- -p 8083:80: 端口映射，把 nginx 中的 80 映射到本地的 8083 端口。
+- ~/nginx/www: 是本地 html 文件的存储目录，/usr/share/nginx/html 是容器内 html 文件的存储目录。
+- ~/nginx/conf/conf.d: 是本地 nginx 配置文件的存储目录，/etc/nginx/conf.d 是容器内 nginx 配置文件的存储目录。
+- --link myphp-fpm:php: 把 myphp-fpm 的网络并入 nginx，并通过修改 nginx 的 /etc/hosts，把域名 php 映射成 127.0.0.1，让 nginx 通过 php:9000 访问 php-fpm。
+
+然后就是在/www目录下创建一个php文件，里面放上phpinfo
+
+
+
+这就部署成功！！！！
+
+部署mysql
+
+其实大致上是一样的都是通过docker拉取，细节就不多说了，详情可以参考菜鸟上的教程https://www.runoob.com/docker/docker-install-mysql.html
+
+最后附上今天安装的所有docker
+
+二、手动安装nginx
+
+提前说一下，我是在centos7下安装的，下面的这些安装都是在centos的root权限下进行的，centos进入root命令：su root
+
+安装gcc
+
+yum install gcc-c++
+
+安装PCRE pcre-devel
+
+yum install -y pcre pcre-devel
+
+安装zlib
+
+yum install -y zlib zlib-devel
+
+安装openSSL
+
+yum install -y openssl openssl-devel
+
+然后就是安装nginx
+
+这里有两种方式
+
+- 第一种是从官网下载：https://nginx.org/en/download.html
+- 第二种是用命令下载wget -c https://nginx.org/download/nginx-1.10.1.tar.gz
+
+
+
+
+
+解压
+
+    tar -zxvf nginx-1.10.1.tar.gz
+    cd nginx-1.10.1
+
+使用默认配置
+
+./configure
+
+
+
+
+
+
+
+编译安装
+
+    make
+    make install
+
+然后看一下安装到哪个位置的
+
+whereis nginx
+
+我的是在/usr/local/nginx/sbin/，然后cd进去
+
+启动、停止nginx
+
+进到sbin目录
+
+    ./nginx 
+    ./nginx -s stop
+    ./nginx -s quit
+    ./nginx -s reload
+    ./nginx -s quit:此方式停止步骤是待nginx进程处理任务完毕进行停止。
+    ./nginx -s stop:此方式相当于先查出nginx进程id再使用kill命令强制杀掉进程。
+
+查询nginx进程：
+
+ps aux|grep nginx
+
+
+
+这时候，用浏览器访问自己的ip:80(默认)就可以看到
+
+
+
+设置开机自启动
+
+如果每次开机都要去启动一次的话还是比较麻烦的，所以感觉开启自启动比较好
+
+直接在rc.local增加自启动代码就ok
+
+vim /etc/rc.local，在最后一行加入/usr/local/nginx/sbin/nginx
+
+
+
+
+
+到此，nginx安装完毕！！
+
+参考链接https://www.cnblogs.com/zhoading/p/8514050.html
+
+接下来安装php-fpm
+
+啥是php-fpm
+
+对我来说是个新的名词，查一波
+
+php-fpm只是一个php-fastcgi的管理器，为php提供管理服务
+
+- 为什么会出现php-fpm 
+fpm的出现全部因为php-fastcgi出现，为了很好的管理php-fastcgi而实现的一个程序。
+- 什么是php-fastcgi
+php-fastcgi 只是一个cgi程序,只会解析php请求，并且返回结果，不会管理(因此才出现的php-fpm)。
+- 为什么不叫php-cgi
+其实在php-fastcgi出现之前是有一个php-cgi存在的,只是它的执行效率低下，因此被php-fastcgi取代。
+- 那fastcgi和cgi有什么区别呢 ？
+这区别就大了，当一个服务web-server(nginx)分发过来请求的时候，通过匹配后缀知道该请求是个动态的php请求，会把这个请求转给php。
+在cgi的年代，思想比较保守，总是一个请求过来后,去读取php.ini里的基础配置信息，初始化执行环境，每次都要不停的去创建一个进程,读取配置，初始化环境，返回数据，退出进程，久而久之，启动进程的工作变的乏味无趣特别累。
+当php来到了5的时代，大家对这种工作方式特别反感，想偷懒的人就拼命的想，我可不可以让cgi一次启动一个主进程(master),让他只读取一次配置，然后在启动多个工作进程(worker),当一个请求来的时候，通过master传递给worker这样就可以避免重复劳动了。于是就产生了fastcgi。
+- fastcgi这么好，启动的worker用完怎么办 ？
+当worker不够的时候，master会通过配置里的信息，动态启动worker，等空闲的时候可以收回worker。
+- 到现在还是没明白php-fpm 是个什么东西
+那就先看看php-fpm的全称PHP-FPM (FastCGI Process Manager) is an alternative PHP FastCGI implementation with some additional features useful for sites of any size, especially busier sites.他就是来管理启动一个master进程和多个worker进程的程序。
+
+参考https://www.cnblogs.com/fjping0606/p/9843529.html
+
+安装mysql
+
+
+
+
+
+
+
+连接mysql数据库
+
+    <?php
+    $connectMysql = mysqli_connect('localhost', 'root', '84622130');
+    
+    ##### 判断是否连接成功
+    
+    if($connectMysql){
+    
+    ##### 连接成功
+    
+    echo 'MySQL连接成功';
+    }
+    else{
+            echo "failed";
+    }
+    
+    
+    ?>
+
+
+
+ok。
+
+试试其他语句
+
+    <?php
+    $ipadd="localhost";
+    $usrname="root";
+    $passwd="84622130";
+    
+    $conn = new mysqli($ipadd,$usrname,$passwd);
+    
+    if ($conn->connect_error){
+            die("connect falied");
+    }
+    $sql="create database test_db2";
+    if($conn->query($sql)=== TRUE){
+            echo "succssful";
+    }
+    else{
+            "error";
+    }
+    $conn->close();
+    ?>
+    
+
+
+
+
+
+
+
+安全加固
+
+关于mysql方面的加固
+
+- 首先我觉得就是不使用默认密码然后还有弱口令密码，然后最好用户名也不使用默认的。
+- 其次，静止远程连接数据库，注释掉 /etc/my.cf中的skip-networking
+- 然后，对数据库中的一些重要数据进行加密存储，比如md5,hash系列的加密
+- 为防止用户读取服务器上的本地文件 
+  防止MySQL使用“LOAD DATA LOCAL INFILE”读取主机上的文件，修改 
+  /etc/my.cnf  中的set-variable=local-infile=0
+- 最后就是，备份，备份很重要，不管是在数据库还是其他地方。
+
+关于linux
+
+环境是在linux下，包括如果租服务器的话也应该是linux(可能是ubuntu，也可能是centos)，因为以前租过服务器自己搭ss，所以linux加固还是有些必要的
+
+锁定系统中多余的自建帐号
+
+对于一些保留的系统伪帐户如：bin, sys， 
+
+adm，uucp，lp, nuucp，hpdb, www, daemon等可根据需要锁定登陆
+
+使用命令passwd -l <用户名>锁定不必要的账号。 
+
+使用命令passwd -u <用户名>解锁需要恢复的账号。
+
+
+
+检查shadow中空口令帐号
+
+awk -F ":" '($2=="!"){print $1}' /etc/shadow
+
+使用命令passwd -l <用户名>锁定不必要的账户。 
+
+使用命令passwd -u <用户名>解锁需要恢复的账户。 
+
+使用命令passwd <用户名>为用户设置密码
+
+设置系统密码策略
+
+
+
+禁用root之外的超级用户
+
+重要文件加上不可改变属性
+
+
+
+ssh
+
+禁止root用户进行远程登录
+
+更改服务端口 
+
+#vi /etc/ssh/sshd_config 
+
+Port 2222 更改ssh端口
+
+阻止系统响应任何从外部/内部来的ping请求 
+
+加固方法： 
+
+执行命令 echo 1 > /proc/sys/net/ipv4/icmp_echo_ignore_all 
+
+其他客户端就不能ping通你的服务器了。
+
+这个命令有点像arp欺骗中流量转发的那个命令~
+
+
